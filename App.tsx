@@ -245,44 +245,46 @@ export default function App() {
 
   if (!currentRole) {
     return (
-      <div className="h-screen bg-slate-50 flex items-center justify-center p-6 font-sans relative overflow-hidden">
-        {/* Abstract Background Decoration */}
-        <div className="absolute top-[-20%] right-[-10%] w-[70%] h-[70%] bg-indigo-50 rounded-full blur-[150px] opacity-60"></div>
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-50 rounded-full blur-[120px] opacity-40"></div>
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-start sm:justify-center p-4 sm:p-6 font-sans relative overflow-y-auto scroll-smooth custom-scrollbar">
+        <div className="w-full max-w-2xl py-8 sm:py-12 flex items-center justify-center">
+          {/* Abstract Background Decoration */}
+          <div className="absolute top-[-20%] right-[-10%] w-[70%] h-[70%] bg-indigo-50 rounded-full blur-[150px] opacity-60"></div>
+          <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-50 rounded-full blur-[120px] opacity-40"></div>
 
-        <div className="max-w-2xl w-full bg-white rounded-[4rem] shadow-[0_50px_100px_rgba(15,23,42,0.08)] p-12 sm:p-20 text-center animate-zoom-in relative z-10 border border-white/80">
-          <div className="bg-[#534df2] w-28 h-28 rounded-[3rem] flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-indigo-200 ring-8 ring-indigo-50 animate-pulse-soft">
-            <Stethoscope className="w-14 h-14 text-white" />
-          </div>
-          <h1 className="text-5xl font-black text-slate-900 mb-4 tracking-tighter">MedBridge AI</h1>
-          <p className="text-slate-500 mb-14 text-sm font-medium leading-relaxed max-w-[280px] mx-auto">
-            Professional medical translation bridge. Select your role to begin.
-          </p>
+          <div className="w-full bg-white rounded-[2.5rem] sm:rounded-[4rem] shadow-[0_50px_100px_rgba(15,23,42,0.08)] p-8 sm:p-20 text-center animate-zoom-in relative z-10 border border-white/80">
+            <div className="bg-[#534df2] w-20 h-20 sm:w-28 sm:h-28 rounded-[2rem] sm:rounded-[3rem] flex items-center justify-center mx-auto mb-6 sm:mb-10 shadow-2xl shadow-indigo-200 ring-4 sm:ring-8 ring-indigo-50 animate-pulse-soft">
+              <Stethoscope className="w-10 h-10 sm:w-14 sm:h-14 text-white" />
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-black text-slate-900 mb-3 sm:mb-4 tracking-tighter">MedBridge AI</h1>
+            <p className="text-slate-500 mb-10 sm:mb-14 text-xs sm:text-sm font-medium leading-relaxed max-w-[280px] mx-auto">
+              Professional medical translation bridge. Select your role to begin.
+            </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-4 sm:px-0">
-            <button onClick={() => setCurrentRole('doctor')} className="group flex flex-col items-center justify-center p-8 bg-slate-50/50 hover:bg-white rounded-[3rem] border-2 border-transparent hover:border-[#534df2]/20 transition-all text-center shadow-sm hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98]">
-              <div className="bg-[#534df2] p-5 rounded-3xl text-white shadow-xl mb-6 transform group-hover:rotate-6 transition-transform">
-                <Stethoscope className="w-10 h-10" />
-              </div>
-              <div className="space-y-1">
-                <span className="block font-black text-slate-900 text-2xl tracking-tight">Doctor</span>
-                <span className="text-[10px] text-slate-400 font-black uppercase tracking-[0.25em]">Provider Portal</span>
-              </div>
-            </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-4 sm:px-0">
+              <button onClick={() => setCurrentRole('doctor')} className="group flex flex-col items-center justify-center p-8 bg-slate-50/50 hover:bg-white rounded-[3rem] border-2 border-transparent hover:border-[#534df2]/20 transition-all text-center shadow-sm hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98]">
+                <div className="bg-[#534df2] p-5 rounded-3xl text-white shadow-xl mb-6 transform group-hover:rotate-6 transition-transform">
+                  <Stethoscope className="w-10 h-10" />
+                </div>
+                <div className="space-y-1">
+                  <span className="block font-black text-slate-900 text-2xl tracking-tight">Doctor</span>
+                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-[0.25em]">Provider Portal</span>
+                </div>
+              </button>
 
-            <button onClick={() => setCurrentRole('patient')} className="group flex flex-col items-center justify-center p-8 bg-slate-50/50 hover:bg-white rounded-[3rem] border-2 border-transparent hover:border-emerald-600/20 transition-all text-center shadow-sm hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98]">
-              <div className="bg-emerald-600 p-5 rounded-3xl text-white shadow-xl mb-6 transform group-hover:-rotate-6 transition-transform">
-                <User className="w-10 h-10" />
-              </div>
-              <div className="space-y-1">
-                <span className="block font-black text-slate-900 text-2xl tracking-tight">Patient</span>
-                <span className="text-[10px] text-slate-400 font-black uppercase tracking-[0.25em]">Patient Bridge</span>
-              </div>
-            </button>
-          </div>
+              <button onClick={() => setCurrentRole('patient')} className="group flex flex-col items-center justify-center p-8 bg-slate-50/50 hover:bg-white rounded-[3rem] border-2 border-transparent hover:border-emerald-600/20 transition-all text-center shadow-sm hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98]">
+                <div className="bg-emerald-600 p-5 rounded-3xl text-white shadow-xl mb-6 transform group-hover:-rotate-6 transition-transform">
+                  <User className="w-10 h-10" />
+                </div>
+                <div className="space-y-1">
+                  <span className="block font-black text-slate-900 text-2xl tracking-tight">Patient</span>
+                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-[0.25em]">Patient Bridge</span>
+                </div>
+              </button>
+            </div>
 
-          <div className="mt-14 flex items-center justify-center gap-2.5 text-[10px] text-slate-300 font-black uppercase tracking-[0.3em]">
-            <ShieldCheck className="w-4 h-4 text-emerald-500" /> HIPAA SECURE CHANNEL
+            <div className="mt-10 sm:mt-14 flex items-center justify-center gap-2.5 text-[9px] sm:text-[10px] text-slate-300 font-black uppercase tracking-[0.3em]">
+              <ShieldCheck className="w-4 h-4 text-emerald-500" /> HIPAA SECURE CHANNEL
+            </div>
           </div>
         </div>
       </div>
@@ -290,7 +292,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans text-slate-900 animate-fade-in">
+    <div className="flex h-[100dvh] bg-slate-50 overflow-hidden font-sans text-slate-900 animate-fade-in touch-none">
       {isSidebarOpen && <div className="lg:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40" onClick={() => setIsSidebarOpen(false)} />}
 
       <aside className={`
@@ -363,7 +365,7 @@ export default function App() {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-white lg:rounded-l-[4.5rem] lg:shadow-2xl transition-all">
+      <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-white lg:rounded-l-[4.5rem] lg:shadow-2xl transition-all touch-auto">
         <header className="px-4 sm:px-12 py-4 sm:py-7 flex items-center justify-between border-b border-slate-100/60 bg-white/80 backdrop-blur-xl z-30 shadow-sm">
           <div className="flex items-center gap-3 sm:gap-6">
             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl">
@@ -390,7 +392,7 @@ export default function App() {
         </header>
 
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 sm:p-12 lg:p-16 space-y-12 scroll-smooth custom-scrollbar bg-slate-50/10">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-12 lg:p-16 space-y-8 sm:space-y-12 scroll-smooth custom-scrollbar bg-slate-50/10 overscroll-contain touch-pan-y">
           {filteredMessages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-12 animate-slide-up">
               <div className="bg-indigo-50/60 p-12 rounded-[4rem] mb-8 animate-pulse-soft shadow-sm border border-indigo-100/50">
