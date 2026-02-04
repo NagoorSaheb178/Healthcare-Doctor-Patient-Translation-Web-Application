@@ -1,21 +1,16 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
 import { Message, ConversationSummary } from './types';
 
-// Initialize the Gemini API client using the environment variable API_KEY as required.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 /**
- * Service to handle AI operations via Gemini API
+ * Service to handle AI operations via Puter.js API
  */
 export const puterService = {
   /**
-   * Translates text between two languages using Gemini API
+   * Translates text between two languages using Puter.js AI
    */
   async translate(text: string, from: string, to: string, fromName: string, toName: string): Promise<string> {
     if (!text || from === to) return text;
-    
-    // Using gemini-3-flash-preview for basic text tasks like translation.
+
     const prompt = `Act as a professional medical interpreter. Translate the following healthcare-related message from ${fromName} to ${toName}. 
     The source text is in ${fromName}. The result must be in ${toName}.
     Ensure medical terminology (symptoms, body parts, dosage) remains highly accurate. 
@@ -24,12 +19,8 @@ export const puterService = {
     Message: "${text}"`;
 
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-      });
-      // Correctly access the .text property as a getter.
-      return response.text?.trim() || text;
+      const response = await window.puter.ai.chat(prompt, { model: "gpt-5-nano" });
+      return typeof response === 'string' ? response.trim() : response.toString().trim();
     } catch (error) {
       console.error('Translation error:', error);
       return text;
@@ -48,50 +39,28 @@ export const puterService = {
       .map(m => `[${m.senderRole.toUpperCase()}]: ${m.originalText}`)
       .join('\n');
 
-    // Using gemini-3-pro-preview for complex clinical summarization tasks.
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: `Task: Summarize the following doctor-patient consultation.\n\nConsultation History:\n${convoText}`,
-        config: {
-          systemInstruction: "You are a professional medical scribe. Summarize the consultation into a structured JSON format. Ensure all clinical data (symptoms, diagnoses, medications) is accurately captured.",
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              symptoms: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: 'List of clinical symptoms identified during the consultation.',
-              },
-              diagnoses: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: 'Potential diagnoses discussed.',
-              },
-              medications: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: 'Medications and dosages mentioned.',
-              },
-              followUp: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: 'Specific next steps or follow-up plans.',
-              },
-              overallSummary: {
-                type: Type.STRING,
-                description: 'A concise clinical summary of the entire session.',
-              }
-            },
-            propertyOrdering: ["symptoms", "diagnoses", "medications", "followUp", "overallSummary"],
-          },
-        },
-      });
+    const prompt = `Task: Summarize the following doctor-patient consultation.
+    Return ONLY a valid JSON object with the following structure:
+    {
+      "symptoms": ["list of symptoms"],
+      "diagnoses": ["potential diagnoses"],
+      "medications": ["medications and dosages"],
+      "followUp": ["next steps"],
+      "overallSummary": "concise clinical summary"
+    }
 
-      const jsonStr = response.text?.trim();
-      if (!jsonStr) throw new Error("Empty response from AI");
-      return JSON.parse(jsonStr);
+    Consultation History:
+    ${convoText}`;
+
+    try {
+      const response = await window.puter.ai.chat(prompt, { model: "gpt-5-nano" });
+      const jsonStr = (typeof response === 'string' ? response : response.toString()).trim();
+
+      // Attempt to extract JSON if there's any surrounding text
+      const match = jsonStr.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("Empty or invalid response from AI");
+
+      return JSON.parse(match[0]);
     } catch (error) {
       console.error('Summarization error:', error);
       return {
