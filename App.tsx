@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { 
-  Mic, 
-  Send, 
-  Search, 
-  User, 
-  Stethoscope, 
-  Globe, 
-  FileText, 
+import {
+  Mic,
+  Send,
+  Search,
+  User,
+  Stethoscope,
+  Globe,
+  FileText,
   Trash2,
   Loader2,
   X,
@@ -105,7 +105,7 @@ export default function App() {
 
       recognitionRef.current.onend = () => {
         if (isActuallyRecording.current) {
-          try { recognitionRef.current.start(); } catch (e) {}
+          try { recognitionRef.current.start(); } catch (e) { }
         }
       };
     }
@@ -115,7 +115,7 @@ export default function App() {
   useEffect(() => {
     const saved = localStorage.getItem('medbridge_history');
     if (saved) {
-      try { setMessages(JSON.parse(saved)); } catch (e) {}
+      try { setMessages(JSON.parse(saved)); } catch (e) { }
     }
   }, []);
 
@@ -155,7 +155,7 @@ export default function App() {
     try {
       if (trimmedText && sLangCode !== tLangCode) {
         const translated = await puterService.translate(trimmedText, sLangCode, tLangCode, sLangName, tLangName);
-        setMessages(prev => prev.map(m => 
+        setMessages(prev => prev.map(m =>
           m.id === newMessage.id ? { ...m, translatedText: translated } : m
         ));
       }
@@ -169,7 +169,7 @@ export default function App() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
-      
+
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
       mediaRecorder.current = new MediaRecorder(stream, { mimeType });
       audioChunks.current = [];
@@ -179,7 +179,7 @@ export default function App() {
       transcriptRef.current = '';
       if (recognitionRef.current) {
         recognitionRef.current.lang = roleRef.current === 'doctor' ? doctorLangRef.current : patientLangRef.current;
-        try { recognitionRef.current.start(); } catch (e) {}
+        try { recognitionRef.current.start(); } catch (e) { }
       }
       isActuallyRecording.current = true;
       setIsRecording(true);
@@ -193,9 +193,9 @@ export default function App() {
     if (!isActuallyRecording.current) return;
     isActuallyRecording.current = false;
     setIsRecording(false);
-    
+
     if (mediaRecorder.current?.state !== 'inactive') mediaRecorder.current?.stop();
-    if (recognitionRef.current) try { recognitionRef.current.stop(); } catch (e) {}
+    if (recognitionRef.current) try { recognitionRef.current.stop(); } catch (e) { }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(t => t.stop());
       streamRef.current = null;
@@ -207,7 +207,7 @@ export default function App() {
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
       const audioBlob = audioChunks.current.length > 0 ? new Blob(audioChunks.current, { type: mimeType }) : null;
       const audioData = audioBlob ? await blobToBase64(audioBlob) : undefined;
-      
+
       if (capturedText.trim() || audioData) {
         handleSendMessage(capturedText, audioData);
       }
@@ -219,7 +219,7 @@ export default function App() {
 
   const filteredMessages = useMemo(() => {
     if (!searchQuery.trim()) return messages;
-    return messages.filter(m => 
+    return messages.filter(m =>
       m.originalText.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (m.translatedText && m.translatedText.toLowerCase().includes(searchQuery.toLowerCase()))
     );
@@ -258,7 +258,7 @@ export default function App() {
           <p className="text-slate-500 mb-14 text-sm font-medium leading-relaxed max-w-[280px] mx-auto">
             Professional medical translation bridge. Select your role to begin.
           </p>
-          
+
           <div className="space-y-5">
             <button onClick={() => setCurrentRole('doctor')} className="w-full group flex items-center justify-between p-7 bg-slate-50/50 hover:bg-white rounded-[2.75rem] border-2 border-transparent hover:border-indigo-600/10 transition-all text-left shadow-sm hover:shadow-2xl transform hover:scale-[1.03] active:scale-[0.98]">
               <div className="flex items-center gap-6">
@@ -298,10 +298,10 @@ export default function App() {
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden font-sans text-slate-900 animate-fade-in">
       {isSidebarOpen && <div className="lg:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40" onClick={() => setIsSidebarOpen(false)} />}
-      
+
       <aside className={`
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
-        lg:translate-x-0 fixed lg:static inset-y-0 left-0 w-[85vw] sm:w-80 bg-white border-r border-slate-100 z-50 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-2xl lg:shadow-none
+        lg:translate-x-0 fixed lg:static inset-y-0 left-0 w-[280px] bg-white border-r border-slate-100 z-50 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-2xl lg:shadow-none
       `}>
         <div className="p-8 h-full flex flex-col">
           <div className="flex items-center justify-between mb-12">
@@ -362,7 +362,7 @@ export default function App() {
             <button onClick={handleSwitchRole} className="w-full flex items-center gap-3 text-indigo-600 hover:bg-indigo-50 text-[11px] font-black py-4 px-5 rounded-2xl transition-all uppercase tracking-[0.2em]">
               <RefreshCcw className="w-4 h-4" /> Switch Professional Role
             </button>
-            <button onClick={() => { if(confirm("Clear conversation logs?")) { setMessages([]); localStorage.removeItem('medbridge_history'); setSearchQuery(''); }}} className="w-full flex items-center gap-3 text-slate-400 hover:text-red-600 hover:bg-red-50 text-[11px] font-black py-4 px-5 rounded-2xl transition-all uppercase tracking-[0.2em]">
+            <button onClick={() => { if (confirm("Clear conversation logs?")) { setMessages([]); localStorage.removeItem('medbridge_history'); setSearchQuery(''); } }} className="w-full flex items-center gap-3 text-slate-400 hover:text-red-600 hover:bg-red-50 text-[11px] font-black py-4 px-5 rounded-2xl transition-all uppercase tracking-[0.2em]">
               <Trash2 className="w-4 h-4" /> Purge Chat History
             </button>
           </div>
@@ -370,30 +370,31 @@ export default function App() {
       </aside>
 
       <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-white lg:rounded-l-[4.5rem] lg:shadow-2xl transition-all">
-        <header className="px-6 sm:px-12 py-6 sm:py-9 flex items-center justify-between border-b border-slate-50 bg-white/95 backdrop-blur-xl z-30 shadow-sm">
-          <div className="flex items-center gap-4 sm:gap-8">
-            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl">
-              <Menu className="w-6 h-6 text-slate-600" />
+        <header className="px-4 sm:px-12 py-4 sm:py-7 flex items-center justify-between border-b border-slate-100/60 bg-white/80 backdrop-blur-xl z-30 shadow-sm">
+          <div className="flex items-center gap-3 sm:gap-6">
+            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl">
+              <Menu className="w-5 h-5 text-slate-600" />
             </button>
             <div>
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Active Consultation</h2>
-                <div className="hidden sm:flex items-center gap-2 bg-emerald-50 text-emerald-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-emerald-100/50">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">Consultation</h2>
+                <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-1 rounded-full uppercase tracking-widest border border-emerald-100/50">
+                  <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                   Neural Ready
                 </div>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-[0.15em] mt-0.5 flex items-center gap-2">
-                <ShieldCheck className="w-3 h-3 text-indigo-400" /> Secure Clinical Bridge • Role: <span className="text-indigo-600 font-black">{currentRole?.toUpperCase()}</span>
+              <p className="text-[9px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-[0.15em] mt-0.5 flex items-center gap-1.5">
+                <ShieldCheck className="w-3 h-3 text-indigo-400" /> <span className="hidden sm:inline">Secure Bridge •</span> Role: <span className="text-indigo-600 font-black">{currentRole?.toUpperCase()}</span>
               </p>
             </div>
           </div>
 
-          <div className={`hidden sm:flex items-center gap-3 px-8 py-4 rounded-full border shadow-sm transition-all duration-700 ${currentRole === 'doctor' ? 'bg-[#534df2] text-white border-indigo-600 shadow-indigo-100' : 'bg-emerald-600 text-white border-emerald-600 shadow-emerald-100'}`}>
-            {currentRole === 'doctor' ? <Stethoscope className="w-5 h-5" /> : <User className="w-5 h-5" />}
-            <span className="text-xs font-black uppercase tracking-[0.2em]">{currentRole}</span>
+          <div className={`flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-2xl sm:rounded-full border shadow-sm transition-all duration-700 ${currentRole === 'doctor' ? 'bg-[#534df2] text-white border-indigo-600 shadow-indigo-100' : 'bg-emerald-600 text-white border-emerald-600 shadow-emerald-100'}`}>
+            {currentRole === 'doctor' ? <Stethoscope className="w-3.5 h-3.5 sm:w-5 sm:h-5" /> : <User className="w-3.5 h-3.5 sm:w-5 sm:h-5" />}
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">{currentRole}</span>
           </div>
         </header>
+
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 sm:p-12 lg:p-16 space-y-12 scroll-smooth custom-scrollbar bg-slate-50/10">
           {filteredMessages.length === 0 ? (
@@ -427,62 +428,57 @@ export default function App() {
           )}
         </div>
 
-        <footer className="px-6 py-6 sm:py-12 sm:px-12 bg-white/70 border-t border-slate-50 relative z-10 backdrop-blur-xl">
-          <div className="max-w-4xl mx-auto">
+        <footer className="px-4 py-4 sm:py-10 sm:px-12 bg-white/70 border-t border-slate-100/50 relative z-10 backdrop-blur-2xl">
+          <div className="max-w-5xl mx-auto">
             {isRecording && (
-              <div className="mb-8 bg-[#534df2] text-white p-6 sm:p-7 rounded-[2.75rem] flex items-center gap-6 animate-slide-up shadow-[0_25px_60px_-15px_rgba(79,70,229,0.3)] ring-8 ring-indigo-50/50">
-                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center animate-pulse shrink-0"><Zap className="text-white w-7 h-7" /></div>
+              <div className="mb-4 sm:mb-8 bg-[#534df2] text-white p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2.5rem] flex items-center gap-4 sm:gap-6 animate-slide-up shadow-2xl ring-4 sm:ring-8 ring-indigo-50/50">
+                <div className="w-10 h-10 sm:w-14 sm:h-14 bg-white/20 rounded-full flex items-center justify-center animate-pulse shrink-0"><Zap className="text-white w-5 h-5 sm:w-7 sm:h-7" /></div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[9px] font-black uppercase text-indigo-100 tracking-[0.25em] mb-1">Live Voice Stream</p>
-                  <p className="text-base sm:text-xl font-bold truncate italic text-white/95">{liveTranscript || "Listening for speech..."}</p>
+                  <p className="text-[7px] sm:text-[9px] font-black uppercase text-indigo-100 tracking-widest mb-0.5 sm:mb-1">Recording Live...</p>
+                  <p className="text-sm sm:text-lg font-bold truncate italic text-white/95">{liveTranscript || "Capturing voice..."}</p>
                 </div>
-                <button onClick={stopRecording} className="px-8 py-4 bg-white text-indigo-600 text-[11px] font-black uppercase rounded-[1.5rem] hover:bg-slate-50 transition-all shadow-xl active:scale-95 shrink-0">Stop & Send</button>
+                <button onClick={stopRecording} className="px-4 sm:px-8 py-2 sm:py-4 bg-white text-indigo-600 text-[9px] sm:text-[11px] font-black uppercase rounded-xl sm:rounded-2xl hover:bg-slate-50 transition-all shadow-lg shrink-0">Stop</button>
               </div>
             )}
-            
-            <div className="flex items-center gap-5 sm:gap-10">
-              <div className="flex-1 relative flex items-center">
-                <div className="w-full bg-slate-100/40 border border-indigo-500/10 rounded-[3rem] flex items-center transition-all focus-within:border-indigo-500/30 focus-within:bg-white focus-within:shadow-[0_15px_50px_rgba(79,70,229,0.06)] px-3">
-                  <textarea 
-                    rows={1} 
-                    value={inputValue} 
-                    onChange={(e) => setInputValue(e.target.value)} 
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(inputValue); }}} 
-                    className="flex-1 bg-transparent py-6 sm:py-8 px-8 text-slate-800 font-bold text-base sm:text-xl outline-none resize-none max-h-40 custom-scrollbar" 
-                    placeholder={`Clinical input in ${LANGUAGES.find(l => l.code === (currentRole === 'doctor' ? doctorLang : patientLang))?.name}...`} 
+
+            <div className="flex items-center gap-3 sm:gap-6">
+              <div className="flex-1 relative">
+                <div className={`w-full bg-slate-100/60 border rounded-[1.5rem] sm:rounded-[2.5rem] flex items-center transition-all focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/5 px-2 sm:px-4 ${isTranslating ? 'border-indigo-300' : 'border-slate-200'}`}>
+                  <textarea
+                    rows={1}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(inputValue); } }}
+                    className="flex-1 bg-transparent py-4 sm:py-7 px-4 sm:px-6 text-slate-800 font-bold text-[15px] sm:text-lg outline-none resize-none max-h-32 custom-scrollbar"
+                    placeholder={`Input in ${LANGUAGES.find(l => l.code === (currentRole === 'doctor' ? doctorLang : patientLang))?.name}...`}
                   />
-                  <div className="flex-shrink-0 px-2">
-                    <button 
-                      onClick={() => handleSendMessage(inputValue)} 
-                      disabled={!inputValue.trim()} 
-                      className="p-5 sm:p-6 bg-[#534df2] text-white rounded-3xl shadow-2xl disabled:bg-slate-200 disabled:shadow-none transition-all transform hover:scale-105 active:scale-95 hover:bg-indigo-700"
+                  <div className="flex-shrink-0 flex items-center gap-2">
+                    <button
+                      onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording}
+                      className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all transform active:scale-90 shadow-sm ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white text-[#534df2] border border-slate-100'}`}
                     >
-                      <Send className="w-6 h-6 sm:w-7 sm:h-7" />
+                      <Mic className={`${isRecording ? 'w-5 h-5' : 'w-5 h-5 sm:w-6 sm:h-6'}`} />
+                    </button>
+                    <button
+                      onClick={() => handleSendMessage(inputValue)}
+                      disabled={!inputValue.trim()}
+                      className="w-10 h-10 sm:w-14 sm:h-14 bg-[#534df2] text-white rounded-xl sm:rounded-2xl shadow-lg disabled:bg-slate-200 disabled:shadow-none transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center"
+                    >
+                      <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   </div>
                 </div>
               </div>
-
-              <div className="shrink-0">
-                <button 
-                  onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording} 
-                  className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center transition-all transform active:scale-90 shadow-[0_15px_60px_rgba(0,0,0,0.06)] bg-white border border-slate-50 relative group ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-[#534df2]'}`}
-                >
-                  <Mic className={`w-11 h-11 sm:w-13 sm:h-13 transition-transform ${isRecording ? 'scale-110' : 'group-hover:scale-110'}`} />
-                  {isRecording && (
-                    <span className="absolute -top-1 -right-1 w-7 h-7 bg-red-500 border-4 border-white rounded-full"></span>
-                  )}
-                </button>
-              </div>
             </div>
-            
-            <div className="mt-8 flex items-center justify-center gap-6 opacity-30 text-[10px] font-black uppercase tracking-widest pointer-events-none">
-              <span className="flex items-center gap-2"><Clock className="w-3 h-3" /> Auto-Logging</span>
-              <span className="flex items-center gap-2"><ShieldCheck className="w-3 h-3" /> HIPAA Ready</span>
-              <span className="flex items-center gap-2"><Zap className="w-3 h-3" /> Neural Bridge</span>
+
+            <div className="mt-4 sm:mt-8 flex items-center justify-center gap-4 sm:gap-8 opacity-40 text-[7px] sm:text-[9px] font-bold uppercase tracking-widest pointer-events-none">
+              <span className="flex items-center gap-1.5"><Clock className="w-2.5 h-2.5 sm:w-3 h-3" /> Secure Log</span>
+              <span className="flex items-center gap-1.5"><ShieldCheck className="w-2.5 h-2.5 sm:w-3 h-3" /> HIPAA Ready</span>
+              <span className="flex items-center gap-1.5"><Zap className="w-2.5 h-2.5 sm:w-3 h-3" /> Neural Path</span>
             </div>
           </div>
         </footer>
+
         {summary && <SummaryModal summary={summary} onClose={() => setSummary(null)} />}
       </main>
     </div>
