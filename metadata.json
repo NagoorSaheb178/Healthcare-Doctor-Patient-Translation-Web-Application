@@ -1,0 +1,7 @@
+{
+  "name": "MedBridge AI - Doctor-Patient Translation",
+  "description": "A secure healthcare translation bridge using Puter AI for real-time doctor-patient communication with audio support and medical summarization.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
