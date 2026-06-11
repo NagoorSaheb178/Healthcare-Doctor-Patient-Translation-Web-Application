@@ -6,6 +6,46 @@ import { Message, ConversationSummary } from './types';
  */
 export const puterService = {
   /**
+   * Authentication methods
+   */
+  async signIn() {
+    return await window.puter.auth.signIn();
+  },
+
+  async signOut() {
+    return await window.puter.auth.signOut();
+  },
+
+  async getUser() {
+    return await window.puter.auth.getUser();
+  },
+
+  async isSignedIn() {
+    return window.puter.auth.isSignedIn();
+  },
+
+  /**
+   * Cloud Storage (KV Store) for persistence
+   */
+  async saveConversations(messages: Message[]) {
+    try {
+      await window.puter.kv.set('medbridge_history', JSON.stringify(messages));
+    } catch (error) {
+      console.error('Save error:', error);
+    }
+  },
+
+  async loadConversations(): Promise<Message[]> {
+    try {
+      const data = await window.puter.kv.get('medbridge_history');
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error('Load error:', error);
+      return [];
+    }
+  },
+
+  /**
    * Translates text between two languages using Puter.js AI
    */
   async translate(text: string, from: string, to: string, fromName: string, toName: string): Promise<string> {
@@ -19,7 +59,7 @@ export const puterService = {
     Message: "${text}"`;
 
     try {
-      const response = await window.puter.ai.chat(prompt, { model: "gpt-5-nano" });
+      const response = await window.puter.ai.chat(prompt, { model: "gpt-4o" });
       return typeof response === 'string' ? response.trim() : response.toString().trim();
     } catch (error) {
       console.error('Translation error:', error);
@@ -53,7 +93,7 @@ export const puterService = {
     ${convoText}`;
 
     try {
-      const response = await window.puter.ai.chat(prompt, { model: "gpt-5-nano" });
+      const response = await window.puter.ai.chat(prompt, { model: "gpt-4o" });
       const jsonStr = (typeof response === 'string' ? response : response.toString()).trim();
 
       // Attempt to extract JSON if there's any surrounding text
@@ -70,6 +110,19 @@ export const puterService = {
         followUp: ["Consult doctor"],
         overallSummary: "AI summarization failed. Please review chat history."
       };
+    }
+  },
+
+  /**
+   * Transcribes audio file to text
+   */
+  async speech2txt(file: File | Blob): Promise<string> {
+    try {
+      const response = await window.puter.ai.speech2txt(file);
+      return response.text || response;
+    } catch (error) {
+      console.error('Speech to text error:', error);
+      return "";
     }
   }
 };
