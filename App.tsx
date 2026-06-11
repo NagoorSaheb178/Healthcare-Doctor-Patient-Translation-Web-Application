@@ -19,7 +19,8 @@ import {
   RefreshCcw,
   Menu,
   MessageSquare,
-  Clock
+  Clock,
+  Check
 } from 'lucide-react';
 import { Role, Message, Language, ConversationSummary } from './types';
 import { puterService } from './puterService';
@@ -59,6 +60,8 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
+  const [user, setUser] = useState<any>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   // Refs to avoid stale closures and manage hardware
   const roleRef = useRef<Role | null>(null);
@@ -79,6 +82,33 @@ export default function App() {
   }, [currentRole, doctorLang, patientLang]);
 
   // STT Initialization
+  // Auth & History Sync
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const signedIn = await puterService.isSignedIn();
+        if (signedIn) {
+          const u = await puterService.getUser();
+          setUser(u);
+          const history = await puterService.loadConversations();
+          setMessages(history);
+        }
+      } catch (e) {
+        console.error("Auth init error:", e);
+      } finally {
+        setIsAuthLoading(false);
+      }
+    };
+    initAuth();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      puterService.saveConversations(messages);
+    }
+  }, [messages, user]);
+
+  // STT Initialization (Previous logic kept)
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -108,14 +138,6 @@ export default function App() {
           try { recognitionRef.current.start(); } catch (e) { }
         }
       };
-    }
-  }, []);
-
-  // History Sync (Conversation Logging)
-  useEffect(() => {
-    const saved = localStorage.getItem('medbridge_history');
-    if (saved) {
-      try { setMessages(JSON.parse(saved)); } catch (e) { }
     }
   }, []);
 
@@ -208,8 +230,25 @@ export default function App() {
       const audioBlob = audioChunks.current.length > 0 ? new Blob(audioChunks.current, { type: mimeType }) : null;
       const audioData = audioBlob ? await blobToBase64(audioBlob) : undefined;
 
-      if (capturedText.trim() || audioData) {
-        handleSendMessage(capturedText, audioData);
+      let finalCapturedText = capturedText;
+
+      if (audioBlob) {
+        setIsTranslating(true);
+        try {
+          const file = new File([audioBlob], 'audio.webm', { type: mimeType });
+          const sttResult = await puterService.speech2txt(file);
+          if (sttResult && sttResult.trim()) {
+            finalCapturedText = sttResult.trim();
+          }
+        } catch (e) {
+          console.error("STT error:", e);
+        } finally {
+          setIsTranslating(false);
+        }
+      }
+
+      if (finalCapturedText.trim() || audioData) {
+        handleSendMessage(finalCapturedText, audioData);
       }
       transcriptRef.current = '';
       setLiveTranscript('');
@@ -243,6 +282,61 @@ export default function App() {
     setCurrentRole(null);
   };
 
+  const handleSignIn = async () => {
+    try {
+      const u = await puterService.signIn();
+      setUser(u);
+      const history = await puterService.loadConversations();
+      setMessages(history);
+    } catch (e) {
+      alert("Failed to sign in. Please try again.");
+    }
+  };
+
+  const handleSignOut = async () => {
+    await puterService.signOut();
+    setUser(null);
+    setMessages([]);
+    setCurrentRole(null);
+  };
+
+  if (isAuthLoading) {
+    return (
+      <div className="h-screen bg-white flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-start sm:justify-center p-4 sm:p-6 font-sans relative overflow-y-auto scroll-smooth custom-scrollbar">
+        <div className="w-full max-w-2xl py-8 sm:py-12 flex items-center justify-center">
+          <div className="absolute top-[-20%] right-[-10%] w-[70%] h-[70%] bg-indigo-50 rounded-full blur-[150px] opacity-60"></div>
+          <div className="w-full bg-white rounded-[2.5rem] sm:rounded-[4rem] shadow-[0_50px_100px_rgba(15,23,42,0.08)] p-8 sm:p-20 text-center animate-zoom-in relative z-10 border border-white/80">
+            <div className="bg-[#534df2] w-20 h-20 sm:w-28 sm:h-28 rounded-[2rem] sm:rounded-[3rem] flex items-center justify-center mx-auto mb-6 sm:mb-10 shadow-2xl shadow-indigo-200 ring-4 sm:ring-8 ring-indigo-50 animate-pulse-soft">
+              <Stethoscope className="w-10 h-10 sm:w-14 sm:h-14 text-white" />
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-black text-slate-900 mb-3 sm:mb-4 tracking-tighter">MedBridge AI</h1>
+            <p className="text-slate-500 mb-10 sm:mb-14 text-xs sm:text-sm font-medium leading-relaxed max-w-[280px] mx-auto">
+              Secure HIPAA-ready medical translation bridge.
+            </p>
+            <button onClick={handleSignIn} className="w-full py-6 px-12 bg-[#534df2] text-white rounded-[2rem] font-black uppercase tracking-widest text-sm hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-200 flex items-center justify-center gap-4 group">
+              <ShieldCheck className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              Secure Connect with Puter
+            </button>
+            <div className="mt-12 text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] flex flex-col items-center gap-3">
+              <div className="flex items-center gap-3 opacity-60">
+                <Check className="w-3 h-3 text-emerald-500" /> AES-256 ENCRYPTION
+                <Check className="w-3 h-3 text-emerald-500" /> CLOUD PERSISTENCE
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!currentRole) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-start sm:justify-center p-4 sm:p-6 font-sans relative overflow-y-auto scroll-smooth custom-scrollbar">
@@ -252,39 +346,43 @@ export default function App() {
           <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-50 rounded-full blur-[120px] opacity-40"></div>
 
           <div className="w-full bg-white rounded-[2.5rem] sm:rounded-[4rem] shadow-[0_50px_100px_rgba(15,23,42,0.08)] p-8 sm:p-20 text-center animate-zoom-in relative z-10 border border-white/80">
-            <div className="bg-[#534df2] w-20 h-20 sm:w-28 sm:h-28 rounded-[2rem] sm:rounded-[3rem] flex items-center justify-center mx-auto mb-6 sm:mb-10 shadow-2xl shadow-indigo-200 ring-4 sm:ring-8 ring-indigo-50 animate-pulse-soft">
-              <Stethoscope className="w-10 h-10 sm:w-14 sm:h-14 text-white" />
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-indigo-100 italic flex items-center justify-center bg-indigo-50 text-indigo-600 font-bold text-xs uppercase">
+                {user?.username?.substring(0, 2) || "U"}
+              </div>
+              <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Welcome, {user?.username}</span>
             </div>
+
             <h1 className="text-4xl sm:text-5xl font-black text-slate-900 mb-3 sm:mb-4 tracking-tighter">MedBridge AI</h1>
             <p className="text-slate-500 mb-10 sm:mb-14 text-xs sm:text-sm font-medium leading-relaxed max-w-[280px] mx-auto">
-              Professional medical translation bridge. Select your role to begin.
+              Select your active session role to continue.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-4 sm:px-0">
-              <button onClick={() => setCurrentRole('doctor')} className="group flex flex-col items-center justify-center p-8 bg-slate-50/50 hover:bg-white rounded-[3rem] border-2 border-transparent hover:border-[#534df2]/20 transition-all text-center shadow-sm hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98]">
-                <div className="bg-[#534df2] p-5 rounded-3xl text-white shadow-xl mb-6 transform group-hover:rotate-6 transition-transform">
-                  <Stethoscope className="w-10 h-10" />
+            <div className="grid grid-cols-2 gap-3 sm:gap-6 px-2 sm:px-0">
+              <button onClick={() => setCurrentRole('doctor')} className="group flex flex-col items-center justify-center p-4 sm:p-8 bg-slate-50/50 hover:bg-white rounded-3xl sm:rounded-[3rem] border-2 border-transparent hover:border-[#534df2]/20 transition-all text-center shadow-sm hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98]">
+                <div className="bg-[#534df2] p-3 sm:p-5 rounded-2xl sm:rounded-3xl text-white shadow-xl mb-3 sm:mb-6 transform group-hover:rotate-6 transition-transform">
+                  <Stethoscope className="w-6 h-6 sm:w-10 sm:h-10" />
                 </div>
-                <div className="space-y-1">
-                  <span className="block font-black text-slate-900 text-2xl tracking-tight">Doctor</span>
-                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-[0.25em]">Provider Portal</span>
+                <div className="space-y-0.5 sm:space-y-1">
+                  <span className="block font-black text-slate-900 text-base sm:text-2xl tracking-tight">Doctor</span>
+                  <span className="text-[7px] sm:text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] sm:tracking-[0.25em]">Provider Portal</span>
                 </div>
               </button>
 
-              <button onClick={() => setCurrentRole('patient')} className="group flex flex-col items-center justify-center p-8 bg-slate-50/50 hover:bg-white rounded-[3rem] border-2 border-transparent hover:border-emerald-600/20 transition-all text-center shadow-sm hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98]">
-                <div className="bg-emerald-600 p-5 rounded-3xl text-white shadow-xl mb-6 transform group-hover:-rotate-6 transition-transform">
-                  <User className="w-10 h-10" />
+              <button onClick={() => setCurrentRole('patient')} className="group flex flex-col items-center justify-center p-4 sm:p-8 bg-slate-50/50 hover:bg-white rounded-3xl sm:rounded-[3rem] border-2 border-transparent hover:border-emerald-600/20 transition-all text-center shadow-sm hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98]">
+                <div className="bg-emerald-600 p-3 sm:p-5 rounded-2xl sm:rounded-3xl text-white shadow-xl mb-3 sm:mb-6 transform group-hover:-rotate-6 transition-transform">
+                  <User className="w-6 h-6 sm:w-10 sm:h-10" />
                 </div>
-                <div className="space-y-1">
-                  <span className="block font-black text-slate-900 text-2xl tracking-tight">Patient</span>
-                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-[0.25em]">Patient Bridge</span>
+                <div className="space-y-0.5 sm:space-y-1">
+                  <span className="block font-black text-slate-900 text-base sm:text-2xl tracking-tight">Patient</span>
+                  <span className="text-[7px] sm:text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] sm:tracking-[0.25em]">Patient Bridge</span>
                 </div>
               </button>
             </div>
 
-            <div className="mt-10 sm:mt-14 flex items-center justify-center gap-2.5 text-[9px] sm:text-[10px] text-slate-300 font-black uppercase tracking-[0.3em]">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" /> HIPAA SECURE CHANNEL
-            </div>
+            <button onClick={handleSignOut} className="mt-12 text-[10px] text-red-400 hover:text-red-600 font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 mx-auto">
+              Sign Out Session
+            </button>
           </div>
         </div>
       </div>
@@ -358,8 +456,8 @@ export default function App() {
             <button onClick={handleSwitchRole} className="w-full flex items-center gap-3 text-indigo-600 hover:bg-indigo-50 text-[11px] font-black py-4 px-5 rounded-2xl transition-all uppercase tracking-[0.2em]">
               <RefreshCcw className="w-4 h-4" /> Switch Professional Role
             </button>
-            <button onClick={() => { if (confirm("Clear conversation logs?")) { setMessages([]); localStorage.removeItem('medbridge_history'); setSearchQuery(''); } }} className="w-full flex items-center gap-3 text-slate-400 hover:text-red-600 hover:bg-red-50 text-[11px] font-black py-4 px-5 rounded-2xl transition-all uppercase tracking-[0.2em]">
-              <Trash2 className="w-4 h-4" /> Purge Chat History
+            <button onClick={handleSignOut} className="w-full flex items-center gap-3 text-slate-400 hover:text-red-600 hover:bg-red-50 text-[11px] font-black py-4 px-5 rounded-2xl transition-all uppercase tracking-[0.2em]">
+              <Trash2 className="w-4 h-4" /> Sign Out & Purge Session
             </button>
           </div>
         </div>
