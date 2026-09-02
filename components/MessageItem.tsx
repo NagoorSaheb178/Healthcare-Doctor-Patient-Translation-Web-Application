@@ -53,18 +53,18 @@ const MessageItem: React.FC<Props> = ({ message, currentUserRole, searchQuery = 
 
   return (
     <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} group animate-slide-up px-2 sm:px-4 mb-6 sm:mb-8`}>
-      <div className={`flex gap-3 sm:gap-4 max-w-[95%] sm:max-w-[80%] ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className={`flex gap-2 sm:gap-3 max-w-[95%] sm:max-w-[85%] lg:max-w-[75%] ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
         
         {/* Avatar */}
-        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 mt-2 shadow-lg transition-transform duration-300 group-hover:scale-110 border-2 ${
+        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-2 shadow-lg transition-transform duration-300 group-hover:scale-110 border-2 ${
           message.senderRole === 'doctor' 
             ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-white' 
             : 'bg-gradient-to-br from-emerald-400 to-teal-500 text-white border-white'
         }`}>
-          {message.senderRole === 'doctor' ? <Stethoscope className="w-4 h-4 sm:w-5 sm:h-5" /> : <User className="w-4 h-4 sm:w-5 sm:h-5" />}
+          {message.senderRole === 'doctor' ? <Stethoscope className="w-4 h-4" /> : <User className="w-4 h-4" />}
         </div>
 
-        <div className="flex flex-col space-y-2 w-full">
+        <div className="flex flex-col space-y-1.5 max-w-full min-w-0">
           {/* Sender Label for Received Messages */}
           {!isMine && (
              <div className="flex items-center gap-2 pl-2">
