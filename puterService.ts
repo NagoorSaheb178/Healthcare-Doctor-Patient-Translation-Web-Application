@@ -124,5 +124,24 @@ export const puterService = {
       console.error('Speech to text error:', error);
       return "";
     }
+  },
+
+  /**
+   * Analyzes an uploaded document or simulated file text
+   */
+  async summarizeDocument(fileName: string, content: string): Promise<string> {
+    try {
+      const prompt = `Act as an expert medical analyst. A patient has uploaded a document named "${fileName}".
+      Here is the extracted content of the document: 
+      "${content}"
+
+      Please provide a concise, professional clinical summary of this document. Focus on key medical findings, diagnoses, medications, or lab results. Keep it brief and well-formatted for the doctor.`;
+      
+      const response = await window.puter.ai.chat(prompt, { model: 'gpt-4o' });
+      return response?.message?.content || response?.text || String(response);
+    } catch (error) {
+      console.error('Document summarization error:', error);
+      return `Failed to summarize document ${fileName}. Please review it manually.`;
+    }
   }
 };
