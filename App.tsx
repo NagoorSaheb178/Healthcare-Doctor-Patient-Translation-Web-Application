@@ -382,7 +382,7 @@ export default function App() {
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-start sm:justify-center p-4 sm:p-6 font-sans relative overflow-y-auto scroll-smooth custom-scrollbar">
         <div className="w-full max-w-2xl py-8 sm:py-12 flex items-center justify-center">
           <div className="absolute top-[-20%] right-[-10%] w-[70%] h-[70%] bg-indigo-50 rounded-full blur-[150px] opacity-60"></div>
-          <div className="w-full bg-white rounded-[2.5rem] sm:rounded-[4rem] shadow-[0_50px_100px_rgba(15,23,42,0.08)] p-8 sm:p-20 text-center animate-zoom-in relative z-10 border border-white/80">
+          <div className="w-full bg-white rounded-[2.5rem] sm:rounded-[4rem] shadow-[0_50px_100px_rgba(15,23,42,0.08)] p-6 sm:p-10 md:p-20 text-center animate-zoom-in relative z-10 border border-white/80">
             <div className="bg-[#534df2] w-20 h-20 sm:w-28 sm:h-28 rounded-[2rem] sm:rounded-[3rem] flex items-center justify-center mx-auto mb-6 sm:mb-10 shadow-2xl shadow-indigo-200 ring-4 sm:ring-8 ring-indigo-50 animate-pulse-soft">
               <Stethoscope className="w-10 h-10 sm:w-14 sm:h-14 text-white" />
             </div>
@@ -414,7 +414,7 @@ export default function App() {
           <div className="absolute top-[-20%] right-[-10%] w-[70%] h-[70%] bg-indigo-50 rounded-full blur-[150px] opacity-60"></div>
           <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-50 rounded-full blur-[120px] opacity-40"></div>
 
-          <div className="w-full bg-white rounded-[2.5rem] sm:rounded-[4rem] shadow-[0_50px_100px_rgba(15,23,42,0.08)] p-8 sm:p-20 text-center animate-zoom-in relative z-10 border border-white/80">
+          <div className="w-full bg-white rounded-[2.5rem] sm:rounded-[4rem] shadow-[0_50px_100px_rgba(15,23,42,0.08)] p-6 sm:p-10 md:p-20 text-center animate-zoom-in relative z-10 border border-white/80">
             <div className="flex items-center justify-center gap-4 mb-8">
               <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-indigo-100 italic flex items-center justify-center bg-indigo-50 text-indigo-600 font-bold text-xs uppercase">
                 {user?.username?.substring(0, 2) || "U"}
@@ -427,7 +427,7 @@ export default function App() {
               Select your active session role to continue.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 px-4 sm:px-0 max-w-lg mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-lg mx-auto">
               <button onClick={() => setCurrentRole('doctor')} className="relative group overflow-hidden flex flex-col items-center justify-center p-6 sm:p-8 bg-white rounded-[2rem] sm:rounded-[3rem] border-2 border-slate-100 hover:border-[#534df2]/30 transition-all duration-300 text-center shadow-sm hover:shadow-2xl transform hover:-translate-y-2">
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div className="relative z-10 w-24 h-24 sm:w-32 sm:h-32 mb-4 sm:mb-6 rounded-full p-2 bg-indigo-50/50 group-hover:bg-white transition-colors duration-300 shadow-inner group-hover:shadow-xl">
@@ -561,7 +561,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl border shadow-sm transition-all duration-500 ${currentRole === 'doctor' ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-indigo-400' : 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-400'}`}>
+          <div className={`hidden sm:flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl border shadow-sm transition-all duration-500 ${currentRole === 'doctor' ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-indigo-400' : 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-400'}`}>
             {currentRole === 'doctor' ? <Stethoscope className="w-4 h-4" /> : <User className="w-4 h-4" />}
             <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest">{currentRole}</span>
           </div>
