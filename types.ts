@@ -9,6 +9,8 @@ export interface Language {
 export interface Message {
   id: string;
   senderRole: Role;
+  type?: 'text' | 'document-summary';
+  fileName?: string;
   originalText: string;
   translatedText?: string;
   audioUrl?: string;
