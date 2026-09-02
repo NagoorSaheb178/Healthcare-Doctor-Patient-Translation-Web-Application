@@ -20,12 +20,15 @@ import {
   Menu,
   MessageSquare,
   Clock,
-  Check
+  Check,
+  Paperclip
 } from 'lucide-react';
 import { Role, Message, Language, ConversationSummary } from './types';
 import { puterService } from './puterService';
 import MessageItem from './components/MessageItem';
 import SummaryModal from './components/SummaryModal';
+import doctorImg from './doctor.jpg';
+import patientImg from './patient.jpg';
 
 const LANGUAGES: Language[] = [
   { code: 'en', name: 'English' },
@@ -74,6 +77,7 @@ export default function App() {
   const recognitionRef = useRef<any>(null);
   const isActuallyRecording = useRef(false);
   const transcriptRef = useRef('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     roleRef.current = currentRole;
@@ -242,27 +246,92 @@ export default function App() {
           }
         } catch (e) {
           console.error("STT error:", e);
-        } finally {
           setIsTranslating(false);
         }
+      } else {
+        handleSendMessage(finalCapturedText);
       }
+    }, 300);
+  };
 
-      if (finalCapturedText.trim() || audioData) {
-        handleSendMessage(finalCapturedText, audioData);
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    const dLang = doctorLangRef.current;
+    const pLang = patientLangRef.current;
+    const sLangCode = roleRef.current === 'doctor' ? dLang : pLang;
+    const tLangCode = roleRef.current === 'doctor' ? pLang : dLang;
+
+    // Read basic text if possible, else just mock
+    let fileContent = "";
+    if (file.type.includes('pdf') || file.name.endsWith('.pdf')) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        // @ts-ignore
+        const pdfjsLib = window['pdfjs-dist/build/pdf'] || window.pdfjsLib;
+        if (pdfjsLib) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          const numPages = pdf.numPages;
+          let fullText = "";
+          for (let i = 1; i <= Math.min(numPages, 10); i++) { // Extract up to 10 pages to avoid overload
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map((item: any) => item.str).join(' ');
+            fullText += pageText + "\n";
+          }
+          fileContent = fullText || "PDF parsed but found no text.";
+        } else {
+          fileContent = "Error: PDF parser not loaded.";
+        }
+      } catch (err) {
+        fileContent = "Failed to parse PDF.";
       }
-      transcriptRef.current = '';
-      setLiveTranscript('');
-      setInputValue('');
-    }, 400);
+    } else if (file.type.includes('text')) {
+      fileContent = await file.text();
+    } else {
+      fileContent = "Non-text file. Needs advanced OCR which is not available in basic demo.";
+    }
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      senderRole: roleRef.current || 'patient',
+      type: 'document-summary',
+      fileName: file.name,
+      originalText: `Analyzing document: ${file.name}...`,
+      timestamp: Date.now(),
+      sourceLang: sLangCode,
+      targetLang: tLangCode
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+    setIsTranslating(true);
+
+    try {
+      const summaryResult = await puterService.summarizeDocument(file.name, fileContent);
+      setMessages(prev => prev.map(m =>
+        m.id === newMessage.id ? { ...m, translatedText: summaryResult, originalText: `Document: ${file.name}` } : m
+      ));
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
   const filteredMessages = useMemo(() => {
-    if (!searchQuery.trim()) return messages;
-    return messages.filter(m =>
+    let result = messages;
+
+    if (!searchQuery.trim()) return result;
+    
+    return result.filter(m =>
       m.originalText.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (m.translatedText && m.translatedText.toLowerCase().includes(searchQuery.toLowerCase()))
+      (m.translatedText && m.translatedText.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (m.fileName && m.fileName.toLowerCase().includes(searchQuery.toLowerCase()))
     );
-  }, [messages, searchQuery]);
+  }, [messages, searchQuery, currentRole]);
 
   const generateSummary = async () => {
     if (messages.length === 0) return;
@@ -358,24 +427,32 @@ export default function App() {
               Select your active session role to continue.
             </p>
 
-            <div className="grid grid-cols-2 gap-3 sm:gap-6 px-2 sm:px-0">
-              <button onClick={() => setCurrentRole('doctor')} className="group flex flex-col items-center justify-center p-4 sm:p-8 bg-slate-50/50 hover:bg-white rounded-3xl sm:rounded-[3rem] border-2 border-transparent hover:border-[#534df2]/20 transition-all text-center shadow-sm hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98]">
-                <div className="bg-[#534df2] p-3 sm:p-5 rounded-2xl sm:rounded-3xl text-white shadow-xl mb-3 sm:mb-6 transform group-hover:rotate-6 transition-transform">
-                  <Stethoscope className="w-6 h-6 sm:w-10 sm:h-10" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 px-4 sm:px-0 max-w-lg mx-auto">
+              <button onClick={() => setCurrentRole('doctor')} className="relative group overflow-hidden flex flex-col items-center justify-center p-6 sm:p-8 bg-white rounded-[2rem] sm:rounded-[3rem] border-2 border-slate-100 hover:border-[#534df2]/30 transition-all duration-300 text-center shadow-sm hover:shadow-2xl transform hover:-translate-y-2">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10 w-24 h-24 sm:w-32 sm:h-32 mb-4 sm:mb-6 rounded-full p-2 bg-indigo-50/50 group-hover:bg-white transition-colors duration-300 shadow-inner group-hover:shadow-xl">
+                  <img src={doctorImg} alt="Doctor" className="w-full h-full object-cover rounded-full transform group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute -bottom-2 -right-2 bg-[#534df2] p-2 rounded-full text-white shadow-lg border-4 border-white">
+                    <Stethoscope className="w-4 h-4" />
+                  </div>
                 </div>
-                <div className="space-y-0.5 sm:space-y-1">
-                  <span className="block font-black text-slate-900 text-base sm:text-2xl tracking-tight">Doctor</span>
-                  <span className="text-[7px] sm:text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] sm:tracking-[0.25em]">Provider Portal</span>
+                <div className="relative z-10 space-y-1">
+                  <span className="block font-black text-slate-900 text-xl sm:text-2xl tracking-tight">Doctor</span>
+                  <span className="text-[8px] sm:text-[10px] text-indigo-500 font-black uppercase tracking-[0.2em] sm:tracking-[0.25em]">Provider Portal</span>
                 </div>
               </button>
 
-              <button onClick={() => setCurrentRole('patient')} className="group flex flex-col items-center justify-center p-4 sm:p-8 bg-slate-50/50 hover:bg-white rounded-3xl sm:rounded-[3rem] border-2 border-transparent hover:border-emerald-600/20 transition-all text-center shadow-sm hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98]">
-                <div className="bg-emerald-600 p-3 sm:p-5 rounded-2xl sm:rounded-3xl text-white shadow-xl mb-3 sm:mb-6 transform group-hover:-rotate-6 transition-transform">
-                  <User className="w-6 h-6 sm:w-10 sm:h-10" />
+              <button onClick={() => setCurrentRole('patient')} className="relative group overflow-hidden flex flex-col items-center justify-center p-6 sm:p-8 bg-white rounded-[2rem] sm:rounded-[3rem] border-2 border-slate-100 hover:border-emerald-500/30 transition-all duration-300 text-center shadow-sm hover:shadow-2xl transform hover:-translate-y-2">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10 w-24 h-24 sm:w-32 sm:h-32 mb-4 sm:mb-6 rounded-full p-2 bg-emerald-50/50 group-hover:bg-white transition-colors duration-300 shadow-inner group-hover:shadow-xl">
+                  <img src={patientImg} alt="Patient" className="w-full h-full object-cover rounded-full transform group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute -bottom-2 -right-2 bg-emerald-500 p-2 rounded-full text-white shadow-lg border-4 border-white">
+                    <User className="w-4 h-4" />
+                  </div>
                 </div>
-                <div className="space-y-0.5 sm:space-y-1">
-                  <span className="block font-black text-slate-900 text-base sm:text-2xl tracking-tight">Patient</span>
-                  <span className="text-[7px] sm:text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] sm:tracking-[0.25em]">Patient Bridge</span>
+                <div className="relative z-10 space-y-1">
+                  <span className="block font-black text-slate-900 text-xl sm:text-2xl tracking-tight">Patient</span>
+                  <span className="text-[8px] sm:text-[10px] text-emerald-600 font-black uppercase tracking-[0.2em] sm:tracking-[0.25em]">Patient Bridge</span>
                 </div>
               </button>
             </div>
@@ -390,116 +467,117 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-[100dvh] bg-slate-50 overflow-hidden font-sans text-slate-900 animate-fade-in touch-none">
-      {isSidebarOpen && <div className="lg:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40" onClick={() => setIsSidebarOpen(false)} />}
+    <div className="flex h-[100dvh] bg-gradient-to-br from-slate-50 to-indigo-50/30 overflow-hidden font-sans text-slate-900 animate-fade-in touch-none">
+      {isSidebarOpen && <div className="lg:hidden fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40" onClick={() => setIsSidebarOpen(false)} />}
 
       <aside className={`
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
-        lg:translate-x-0 fixed lg:static inset-y-0 left-0 w-[280px] bg-white border-r border-slate-100 z-50 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-2xl lg:shadow-none
+        lg:translate-x-0 fixed lg:static inset-y-0 left-0 w-[280px] bg-white/90 backdrop-blur-3xl border-r border-slate-100/50 z-50 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-[20px_0_40px_-15px_rgba(0,0,0,0.05)] lg:shadow-none flex flex-col
       `}>
-        <div className="p-8 h-full flex flex-col">
-          <div className="flex items-center justify-between mb-12">
-            <div className="flex items-center gap-4">
-              <div className="bg-[#534df2] p-3 rounded-2xl shadow-xl">
-                <Stethoscope className="text-white w-6 h-6" />
+        <div className="p-6 flex-shrink-0">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3 group cursor-pointer">
+              <div className="bg-gradient-to-br from-[#534df2] to-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-200 transition-transform group-hover:scale-105">
+                <Stethoscope className="text-white w-5 h-5" />
               </div>
-              <h1 className="text-2xl font-black tracking-tighter">MedBridge</h1>
+              <h1 className="text-xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700">MedBridge</h1>
             </div>
-            <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-3 hover:bg-slate-50 rounded-full">
-              <X className="w-6 h-6 text-slate-400" />
+            <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 hover:bg-slate-100/80 rounded-full transition-colors">
+              <X className="w-4 h-4 text-slate-400" />
             </button>
           </div>
+        </div>
 
-          <div className="space-y-12 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-            {/* SEARCH LOGS */}
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Search Records</label>
-              <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
-                <input type="text" placeholder="Search keywords..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-[1.5rem] text-sm font-semibold focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 focus:bg-white transition-all outline-none" />
-              </div>
+        <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-8 custom-scrollbar">
+          {/* SEARCH LOGS */}
+          <div className="space-y-3">
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Search Records</label>
+            <div className="relative group">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+              <input type="text" placeholder="Search keywords..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 focus:bg-white transition-all outline-none shadow-sm" />
             </div>
+          </div>
 
-            {/* SETTINGS */}
-            <div className="space-y-6">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Language Matrix</label>
-              <div className="space-y-6 bg-slate-50/50 p-6 rounded-[2.5rem] border border-slate-100">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase">Provider</span>
-                    <Languages className="w-3 h-3 text-indigo-400" />
-                  </div>
-                  <select value={doctorLang} onChange={(e) => setDoctorLang(e.target.value)} className="w-full p-4 bg-white border border-slate-100 rounded-2xl text-sm font-bold shadow-sm outline-none cursor-pointer hover:border-indigo-500 transition-colors">
+          {/* SETTINGS - Compact Language Matrix */}
+          <div className="space-y-3">
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Language Setup</label>
+            <div className="bg-slate-50/80 rounded-2xl border border-slate-100 p-3 shadow-inner">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 space-y-1.5">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1">Provider</span>
+                  <select value={doctorLang} onChange={(e) => setDoctorLang(e.target.value)} className="w-full bg-white border border-slate-100 rounded-lg text-xs font-bold p-2 outline-none cursor-pointer hover:border-indigo-300 transition-colors shadow-sm text-center">
                     {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.name}</option>)}
                   </select>
                 </div>
-                <div className="flex justify-center"><ArrowRightLeft className="w-4 h-4 text-slate-300" /></div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase">Receiver</span>
-                    <Globe className="w-3 h-3 text-emerald-400" />
-                  </div>
-                  <select value={patientLang} onChange={(e) => setPatientLang(e.target.value)} className="w-full p-4 bg-white border border-slate-100 rounded-2xl text-sm font-bold shadow-sm outline-none cursor-pointer hover:border-emerald-500 transition-colors">
+                <div className="flex-shrink-0 pt-4">
+                  <ArrowRightLeft className="w-3.5 h-3.5 text-slate-300" />
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1">Receiver</span>
+                  <select value={patientLang} onChange={(e) => setPatientLang(e.target.value)} className="w-full bg-white border border-slate-100 rounded-lg text-xs font-bold p-2 outline-none cursor-pointer hover:border-emerald-300 transition-colors shadow-sm text-center">
                     {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.name}</option>)}
                   </select>
                 </div>
               </div>
             </div>
-
-            <button onClick={generateSummary} disabled={messages.length === 0 || isSummarizing} className="w-full flex items-center justify-center gap-3 py-5 px-4 bg-[#534df2] hover:bg-indigo-700 disabled:bg-slate-200 text-white rounded-[2rem] font-black uppercase tracking-widest text-[11px] transition-all shadow-2xl shadow-indigo-100 active:scale-[0.98]">
-              {isSummarizing ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
-              Generate Clinical Summary
-            </button>
           </div>
+        </div>
 
-          <div className="mt-10 pt-6 border-t border-slate-50 space-y-2">
-            <button onClick={handleSwitchRole} className="w-full flex items-center gap-3 text-indigo-600 hover:bg-indigo-50 text-[11px] font-black py-4 px-5 rounded-2xl transition-all uppercase tracking-[0.2em]">
-              <RefreshCcw className="w-4 h-4" /> Switch Professional Role
+        <div className="p-6 flex-shrink-0 border-t border-slate-100/50 bg-white/50 backdrop-blur-xl space-y-4">
+          {currentRole === 'doctor' && (
+            <button onClick={generateSummary} disabled={messages.length === 0 || isSummarizing} className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-indigo-500 to-[#534df2] hover:from-indigo-600 hover:to-indigo-700 disabled:from-slate-200 disabled:to-slate-200 text-white rounded-xl font-black uppercase tracking-widest text-[9px] transition-all shadow-md active:scale-[0.98]">
+              {isSummarizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+              Generate Summary
             </button>
-            <button onClick={handleSignOut} className="w-full flex items-center gap-3 text-slate-400 hover:text-red-600 hover:bg-red-50 text-[11px] font-black py-4 px-5 rounded-2xl transition-all uppercase tracking-[0.2em]">
-              <Trash2 className="w-4 h-4" /> Sign Out & Purge Session
+          )}
+          <div className="flex gap-2">
+            <button onClick={handleSwitchRole} className="flex-1 flex flex-col items-center justify-center gap-1.5 text-indigo-500 bg-indigo-50/50 hover:bg-indigo-100 text-[8px] font-black py-2.5 rounded-lg transition-colors uppercase tracking-[0.1em]">
+              <RefreshCcw className="w-3 h-3" /> Switch Role
+            </button>
+            <button onClick={handleSignOut} className="flex-1 flex flex-col items-center justify-center gap-1.5 text-red-400 bg-red-50/50 hover:bg-red-100 hover:text-red-600 text-[8px] font-black py-2.5 rounded-lg transition-colors uppercase tracking-[0.1em]">
+              <Trash2 className="w-3 h-3" /> Purge Session
             </button>
           </div>
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-white lg:rounded-l-[4.5rem] lg:shadow-2xl transition-all touch-auto">
-        <header className="px-4 sm:px-12 py-4 sm:py-7 flex items-center justify-between border-b border-slate-100/60 bg-white/80 backdrop-blur-xl z-30 shadow-sm">
-          <div className="flex items-center gap-3 sm:gap-6">
-            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl">
+      <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-transparent lg:rounded-l-[3rem] transition-all touch-auto z-10 shadow-[-20px_0_40px_-15px_rgba(0,0,0,0.03)]">
+        <header className="px-5 sm:px-10 py-4 sm:py-5 flex items-center justify-between border-b border-white/50 bg-white/60 backdrop-blur-2xl z-30 shadow-[0_2px_10px_rgba(0,0,0,0.02)] sticky top-0">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 bg-white/50 hover:bg-white border border-slate-100 rounded-xl shadow-sm transition-all">
               <Menu className="w-5 h-5 text-slate-600" />
             </button>
             <div>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">Consultation</h2>
-                <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-1 rounded-full uppercase tracking-widest border border-emerald-100/50">
-                  <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Consultation</h2>
+                <div className="flex items-center gap-1.5 bg-emerald-50/80 text-emerald-600 text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-widest border border-emerald-200/50">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                   Neural Ready
                 </div>
               </div>
-              <p className="text-[9px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-[0.15em] mt-0.5 flex items-center gap-1.5">
-                <ShieldCheck className="w-3 h-3 text-indigo-400" /> <span className="hidden sm:inline">Secure Bridge •</span> Role: <span className="text-indigo-600 font-black">{currentRole?.toUpperCase()}</span>
+              <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" /> <span className="hidden sm:inline">Secure Bridge •</span> Role: <span className="text-indigo-600 font-black px-1.5 py-0.5 bg-indigo-50 rounded-md">{currentRole?.toUpperCase()}</span>
               </p>
             </div>
           </div>
 
-          <div className={`flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-2xl sm:rounded-full border shadow-sm transition-all duration-700 ${currentRole === 'doctor' ? 'bg-[#534df2] text-white border-indigo-600 shadow-indigo-100' : 'bg-emerald-600 text-white border-emerald-600 shadow-emerald-100'}`}>
-            {currentRole === 'doctor' ? <Stethoscope className="w-3.5 h-3.5 sm:w-5 sm:h-5" /> : <User className="w-3.5 h-3.5 sm:w-5 sm:h-5" />}
-            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">{currentRole}</span>
+          <div className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl border shadow-sm transition-all duration-500 ${currentRole === 'doctor' ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-indigo-400' : 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-400'}`}>
+            {currentRole === 'doctor' ? <Stethoscope className="w-4 h-4" /> : <User className="w-4 h-4" />}
+            <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest">{currentRole}</span>
           </div>
         </header>
 
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-12 lg:p-16 space-y-8 sm:space-y-12 scroll-smooth custom-scrollbar bg-slate-50/10 overscroll-contain touch-pan-y">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-10 lg:p-14 space-y-6 sm:space-y-10 scroll-smooth custom-scrollbar bg-slate-50/50 overscroll-contain touch-pan-y relative z-0">
           {filteredMessages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center p-12 animate-slide-up">
-              <div className="bg-indigo-50/60 p-12 rounded-[4rem] mb-8 animate-pulse-soft shadow-sm border border-indigo-100/50">
-                {searchQuery ? <Search className="w-24 h-24 text-indigo-300" /> : <MessageSquare className="w-24 h-24 text-indigo-300" />}
+            <div className="h-full flex flex-col items-center justify-center text-center p-8 animate-slide-up">
+              <div className="bg-white p-10 rounded-full mb-6 shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-slate-100">
+                {searchQuery ? <Search className="w-16 h-16 text-indigo-300" /> : <MessageSquare className="w-16 h-16 text-indigo-400" />}
               </div>
-              <h3 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">
+              <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">
                 {searchQuery ? "No Matches Found" : "Bridge Initialized"}
               </h3>
-              <p className="text-slate-400 max-w-sm text-base font-medium leading-relaxed">
+              <p className="text-slate-500 max-w-sm text-sm font-medium leading-relaxed">
                 {searchQuery ? `No logs found for "${searchQuery}". Try a different term.` : `Begin speaking or typing. Messages are instantly translated and logged with HIPAA-level privacy.`}
               </p>
             </div>
@@ -509,66 +587,70 @@ export default function App() {
             ))
           )}
           {isTranslating && (
-            <div className="flex justify-start animate-fade-in pl-2">
-              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 flex items-center gap-5 shadow-xl">
-                <div className="flex gap-2">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            <div className="flex justify-start animate-fade-in pl-4">
+              <div className="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-slate-100 flex items-center gap-4 shadow-sm">
+                <div className="flex gap-1.5">
+                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                 </div>
-                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Neural Path Active...</span>
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Translating...</span>
               </div>
             </div>
           )}
         </div>
 
-        <footer className="px-4 py-4 sm:py-10 sm:px-12 bg-white/70 border-t border-slate-100/50 relative z-10 backdrop-blur-2xl">
-          <div className="max-w-5xl mx-auto">
+        <footer className="px-4 py-3 sm:px-6 bg-[#f0f2f5] border-t border-slate-200 relative z-30 flex-shrink-0">
+          <div className="w-full mx-auto">
             {isRecording && (
-              <div className="mb-4 sm:mb-8 bg-[#534df2] text-white p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2.5rem] flex items-center gap-4 sm:gap-6 animate-slide-up shadow-2xl ring-4 sm:ring-8 ring-indigo-50/50">
-                <div className="w-10 h-10 sm:w-14 sm:h-14 bg-white/20 rounded-full flex items-center justify-center animate-pulse shrink-0"><Zap className="text-white w-5 h-5 sm:w-7 sm:h-7" /></div>
+              <div className="mb-3 bg-gradient-to-r from-red-500 to-rose-600 text-white p-3 sm:p-4 rounded-xl flex items-center gap-4 shadow-md animate-slide-up">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center animate-pulse shrink-0"><Mic className="text-white w-4 h-4" /></div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[7px] sm:text-[9px] font-black uppercase text-indigo-100 tracking-widest mb-0.5 sm:mb-1">Recording Live...</p>
-                  <p className="text-sm sm:text-lg font-bold truncate italic text-white/95">{liveTranscript || "Capturing voice..."}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5 text-red-100">Recording Audio...</p>
+                  <p className="text-sm font-semibold truncate italic text-white">{liveTranscript || "Listening..."}</p>
                 </div>
-                <button onClick={stopRecording} className="px-4 sm:px-8 py-2 sm:py-4 bg-white text-indigo-600 text-[9px] sm:text-[11px] font-black uppercase rounded-xl sm:rounded-2xl hover:bg-slate-50 transition-all shadow-lg shrink-0">Stop</button>
+                <button onClick={stopRecording} className="px-4 py-2 bg-white text-red-600 text-xs font-black uppercase rounded-lg hover:bg-slate-50 transition-colors shadow-sm shrink-0">Done</button>
               </div>
             )}
 
-            <div className="flex items-center gap-4">
-              <div className="flex-1 relative">
-                <div className={`w-full bg-slate-100/70 border rounded-[1.5rem] sm:rounded-[2rem] flex items-center transition-all focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 px-2 sm:px-3 ${isTranslating ? 'border-indigo-300' : 'border-slate-200'}`}>
-                  <textarea
-                    rows={1}
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(inputValue); } }}
-                    className="flex-1 bg-transparent py-4 sm:py-5 px-4 sm:px-6 text-slate-800 font-bold text-[14px] sm:text-base outline-none resize-none max-h-32 custom-scrollbar placeholder:text-slate-400 placeholder:font-medium"
-                    placeholder={`Input in ${LANGUAGES.find(l => l.code === (currentRole === 'doctor' ? doctorLang : patientLang))?.name}...`}
-                  />
-                  <div className="flex-shrink-0 flex items-center gap-2 pr-1.5 py-1.5">
-                    <button
-                      onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording}
-                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[1rem] sm:rounded-[1.5rem] flex items-center justify-center transition-all transform active:scale-90 shadow-sm ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white text-[#534df2] border border-slate-100 hover:bg-slate-50'}`}
-                    >
-                      <Mic className={`${isRecording ? 'w-5 h-5' : 'w-5 h-5 sm:w-5.5 sm:h-5.5'}`} />
-                    </button>
-                    <button
-                      onClick={() => handleSendMessage(inputValue)}
-                      disabled={!inputValue.trim()}
-                      className="w-10 h-10 sm:w-12 sm:h-12 bg-[#534df2] text-white rounded-[1rem] sm:rounded-[1.5rem] shadow-lg disabled:bg-slate-200 disabled:shadow-none transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center"
-                    >
-                      <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
-                  </div>
-                </div>
+            <div className="flex items-end gap-2 sm:gap-3">
+              <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,.pdf,.txt,.doc,.docx" />
+              <button onClick={() => fileInputRef.current?.click()} className="p-2 sm:p-3 text-slate-500 hover:text-slate-700 hover:bg-slate-200/50 rounded-full transition-colors flex-shrink-0 mb-1">
+                <Paperclip className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+              
+              <div className="flex-1 bg-white border border-slate-200 rounded-2xl flex items-center shadow-sm focus-within:shadow-md transition-shadow py-1 px-2">
+                <textarea
+                  rows={1}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(inputValue); } }}
+                  className="flex-1 bg-transparent py-2.5 sm:py-3 px-3 text-slate-800 font-medium text-[15px] outline-none resize-none max-h-32 custom-scrollbar placeholder:text-slate-400 leading-relaxed"
+                  placeholder={`Type a message...`}
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-shrink-0">
+                {!inputValue.trim() ? (
+                  <button
+                    onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording}
+                    className={`p-3 sm:p-3.5 rounded-full flex items-center justify-center transition-transform active:scale-90 ${isRecording ? 'bg-red-500 text-white shadow-md animate-pulse' : 'bg-transparent text-slate-500 hover:bg-slate-200/50 hover:text-slate-700'}`}
+                  >
+                    <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSendMessage(inputValue)}
+                    className="p-3 sm:p-3.5 bg-[#00a884] text-white rounded-full shadow-md hover:bg-[#008f6f] active:scale-90 transition-all flex items-center justify-center"
+                  >
+                    <Send className="w-5 h-5 sm:w-5 sm:h-5 ml-0.5" />
+                  </button>
+                )}
               </div>
             </div>
-
-            <div className="mt-4 sm:mt-8 flex items-center justify-center gap-4 sm:gap-8 opacity-40 text-[7px] sm:text-[9px] font-bold uppercase tracking-widest pointer-events-none">
-              <span className="flex items-center gap-1.5"><Clock className="w-2.5 h-2.5 sm:w-3 h-3" /> Secure Log</span>
-              <span className="flex items-center gap-1.5"><ShieldCheck className="w-2.5 h-2.5 sm:w-3 h-3" /> HIPAA Ready</span>
-              <span className="flex items-center gap-1.5"><Zap className="w-2.5 h-2.5 sm:w-3 h-3" /> Neural Path</span>
+            
+            <div className="mt-2 flex items-center justify-center gap-4 opacity-40 text-[9px] font-bold uppercase tracking-widest pointer-events-none">
+              <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> End-to-end Encrypted Log</span>
             </div>
           </div>
         </footer>
