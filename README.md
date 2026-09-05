@@ -2,10 +2,6 @@
 
 **MedBridge AI** is a real-time, AI-powered communication bridge designed to eliminate language barriers in healthcare. It enables doctors and patients to communicate effortlessly through speech and text, ensuring accurate medical consultations regardless of the languages spoken.
 
-## 🚀 Live Demo & Deployment
-- **Deployment Platform**: Puter.com / Vercel
-- **Status**: ✅ Fully Functional & Deployed
-
 ---
 
 ## ✨ Features
