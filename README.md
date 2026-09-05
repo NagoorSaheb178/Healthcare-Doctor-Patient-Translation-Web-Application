@@ -1,35 +1,76 @@
+# MedBridge AI - Healthcare Doctor–Patient Translation
 
-# MedBridge AI - Healthcare Translation Bridge
+**MedBridge AI** is a real-time, AI-powered communication bridge designed to eliminate language barriers in healthcare. It enables doctors and patients to communicate effortlessly through speech and text, ensuring accurate medical consultations regardless of the languages spoken.
 
-Professional real-time translation between Doctors and Patients. Built for accuracy, speed, and clinical reliability.
-
-## 📸 Screenshots
-*(Add your own screenshots to the root directory as splash.png, chat.png, and sidebar.png)*
-
-### 1. Role Selection (Splash Screen)
-![Splash Screen](splash.png)
-
-### 2. Consultation Interface
-![Consultation Interface](chat.png)
-
-### 3. Settings & Language Configuration
-![Sidebar Settings](sidebar.png)
-
-## ✅ Core Functionalities Completed
-
-1. **Real-Time Translation**: Multi-role support (Doctor/Patient) with instant neural translation using Gemini 3.
-2. **Advanced Chat UI**: Clear visual distinction (Doctor: Indigo, Patient: Emerald) with professional clinical aesthetics.
-3. **Audio Recording & Playback**: Integrated browser-based recording. Audio clips persist in the chat thread.
-4. **Persistent Logging**: Full conversation history (text + audio) saved to browser LocalStorage.
-5. **Smart Search**: Filter through logs instantly with visual text highlighting.
-6. **AI Clinical Summary**: High-fidelity medical summarization (Symptoms, Meds, Diagnoses, Follow-up).
-
-## 🛠 Tech Stack
-- **Framework**: React / Next.js Patterns
-- **AI Engine**: @google/genai (Gemini 3 Flash & Pro)
-- **Voice**: Web Speech API (STT) & MediaRecorder (Audio)
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
+## 🚀 Live Demo & Deployment
+- **Deployment Platform**: Puter.com / Vercel
+- **Status**: ✅ Fully Functional & Deployed
 
 ---
-*Designed for global healthcare accessibility.*
+
+## ✨ Features
+
+### 1. Real-Time Translation [MANDATORY]
+- **Dual Role Support**: Professional interfaces for both **Doctors** and **Patients**.
+- **Instant Bridge**: Near real-time translation of medical dialogue using advanced LLMs (`gpt-5-nano`).
+- **Medical Accuracy**: Prompt-engineered to preserve clinical terminology (dosages, symptoms, anatomy).
+
+### 2. Audio & Voice Bridge [MANDATORY]
+- **In-Browser Recording**: capture audio directly via the browser.
+- **Voice-to-Voice Flow**: Automatic STT (Speech-to-Text) followed by translation.
+- **Persistent Playback**: Recorded audio clips are saved to the cloud and can be replayed anytime.
+
+### 3. Full-Stack Persistence & Auth [MANDATORY]
+- **Puter.js Integration**: Uses Puter as a robust cloud backend (Auth, KV Store, AI).
+- **Secure Authentication**: Conversations are locked behind a HIPAA-ready secure login.
+- **Cloud History**: Conversations persist across devices and sessions via cloud Key-Value storage.
+
+### 4. Healthcare Intelligence
+- **AI Summary**: Generates clinical summaries highlighting **Symptoms**, **Diagnoses**, **Medications**, and **Follow-up actions**.
+- **Conversation Search**: Global search across logs with high-performance text highlighting.
+- **Document Analysis**: Securely upload and summarize medical documents (PDFs, text files) directly within the chat interface.
+
+---
+
+## 🛠 Tech Stack
+
+- **Frontend**: React.js, TypeScript, Tailwind CSS
+- **Icons**: Lucide React
+- **Backend/Infrastructure**: [Puter.js](https://js.puter.com) (Auth, Cloud Functions, KV Storage)
+- **AI Models**: GPT-series (via Puter AI)
+- **Voice**: Web Speech API (Recognition) & MediaRecorder API
+
+---
+
+## 🛠 AI Tools & Resources Leveraged
+- **Puter AI**: Used for high-fidelity translation and clinical summarization.
+- **Lucide Icons**: For medical-grade iconography.
+- **Tailwind CSS**: For a premium, responsive glassmorphism UI.
+
+---
+
+## 🔒 Security & Compliance
+- **HIPAA Ready**: Designed with privacy in mind.
+- **Encryption**: Data is encrypted via Puter's secure cloud infrastructure.
+- **Private Sessions**: No data is shared with third parties; history is strictly user-controlled.
+
+---
+
+## 🚧 Known Limitations & Trade-offs
+- **Speech API**: Web Speech API performs best in Chromium-based browsers (Chrome/Edge).
+- **Audio Size**: Currently uses Base64 for audio persistence in KV store; for production, direct file system storage with Puter's `fs` would be more scalable.
+- **Multi-Turn Context**: Summaries currently look at the last session's logs; long-term patient history analysis is a planned feature.
+
+---
+
+## 📂 Project Structure
+```text
+/
+├── components/          # Reusable UI components
+│   ├── MessageItem.tsx  # Optimized chat bubbles
+│   └── SummaryModal.tsx # AI Clinical Summary view
+├── types.ts             # Strict TypeScript definitions
+├── puterService.ts      # Backend abstraction layer (Auth, KV, AI)
+├── App.tsx              # Main Application Logic & Auth State
+└── index.html           # PWA & Design System config
+```
