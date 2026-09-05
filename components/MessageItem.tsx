@@ -80,44 +80,28 @@ const MessageItem: React.FC<Props> = ({ message, currentUserRole, searchQuery = 
 
           {/* Main Bubble */}
           {message.type === 'document-summary' ? (
-            !isMine ? (
-              <div className="bg-white border-2 border-indigo-100 rounded-3xl p-5 sm:p-6 shadow-md max-w-lg w-full relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 to-purple-500"></div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
-                    <FileText className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
-                      Document Analysis
-                      <span className="bg-amber-100 text-amber-700 text-[8px] px-2 py-0.5 rounded-full uppercase tracking-widest font-black">Private</span>
-                    </h4>
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{message.fileName || "Uploaded File"}</p>
-                  </div>
+            <div className={`bg-white border-2 border-indigo-100 rounded-3xl p-5 sm:p-6 shadow-md max-w-lg w-full relative overflow-hidden ${isMine ? 'rounded-br-sm' : 'rounded-bl-sm'}`}>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 to-purple-500"></div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+                  <FileText className="w-6 h-6" />
                 </div>
-                <div className="bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-100 text-[13px] sm:text-sm font-medium text-slate-700 leading-relaxed break-words">
-                  {message.translatedText ? highlightText(message.translatedText, searchQuery) : (
-                    <span className="flex items-center gap-2 text-indigo-500"><div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div> Summarizing...</span>
-                  )}
+                <div>
+                  <h4 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
+                    Document Analysis
+                    <span className="bg-indigo-100 text-indigo-700 text-[8px] px-2 py-0.5 rounded-full uppercase tracking-widest font-black">
+                      {isMine ? 'Uploaded' : 'Received'}
+                    </span>
+                  </h4>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{message.fileName || "Uploaded File"}</p>
                 </div>
               </div>
-            ) : (
-              <div className={`rounded-3xl shadow-sm relative transition-all duration-300 px-5 py-4 ${
-                isMine
-                  ? 'bg-gradient-to-br from-indigo-500 to-[#534df2] text-white rounded-br-sm'
-                  : 'bg-white text-slate-800 border border-slate-100 rounded-bl-sm'
-              }`}>
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-xl ${isMine ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>
-                    <FileText className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold tracking-tight">Uploaded Document</p>
-                    <p className={`text-[10px] font-medium opacity-80 uppercase tracking-wider`}>{message.fileName}</p>
-                  </div>
-                </div>
+              <div className="bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-100 text-[13px] sm:text-sm font-medium text-slate-700 leading-relaxed break-words">
+                {message.translatedText ? highlightText(message.translatedText, searchQuery) : (
+                  <span className="flex items-center gap-2 text-indigo-500"><div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div> Summarizing...</span>
+                )}
               </div>
-            )
+            </div>
           ) : (
             <div className={`rounded-3xl shadow-sm relative transition-all duration-300 group-hover:shadow-md ${
               isMine
