@@ -80,7 +80,7 @@ const MessageItem: React.FC<Props> = ({ message, currentUserRole, searchQuery = 
 
           {/* Main Bubble */}
           {message.type === 'document-summary' ? (
-            currentUserRole === 'doctor' ? (
+            !isMine ? (
               <div className="bg-white border-2 border-indigo-100 rounded-3xl p-5 sm:p-6 shadow-md max-w-lg w-full relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 to-purple-500"></div>
                 <div className="flex items-center gap-3 mb-4">
