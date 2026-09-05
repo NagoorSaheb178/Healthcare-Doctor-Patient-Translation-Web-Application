@@ -504,17 +504,18 @@ export default function App() {
             <div className="bg-slate-50/80 rounded-2xl border border-slate-100 p-3 shadow-inner">
               <div className="flex items-center gap-3">
                 <div className="flex-1 space-y-1.5">
-                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1">Provider</span>
-                  <select value={doctorLang} onChange={(e) => setDoctorLang(e.target.value)} className="w-full bg-white border border-slate-100 rounded-lg text-xs font-bold p-2 outline-none cursor-pointer hover:border-indigo-300 transition-colors shadow-sm text-center">
-                    {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.name}</option>)}
-                  </select>
-                </div>
-                <div className="flex-shrink-0 pt-4">
-                  <ArrowRightLeft className="w-3.5 h-3.5 text-slate-300" />
-                </div>
-                <div className="flex-1 space-y-1.5">
-                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1">Receiver</span>
-                  <select value={patientLang} onChange={(e) => setPatientLang(e.target.value)} className="w-full bg-white border border-slate-100 rounded-lg text-xs font-bold p-2 outline-none cursor-pointer hover:border-emerald-300 transition-colors shadow-sm text-center">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1">Your Language</span>
+                  <select 
+                    value={currentRole === 'doctor' ? doctorLang : patientLang} 
+                    onChange={(e) => {
+                      if (currentRole === 'doctor') {
+                        setDoctorLang(e.target.value);
+                      } else {
+                        setPatientLang(e.target.value);
+                      }
+                    }} 
+                    className="w-full bg-white border border-slate-100 rounded-lg text-xs font-bold p-2 outline-none cursor-pointer hover:border-indigo-300 transition-colors shadow-sm text-center"
+                  >
                     {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.name}</option>)}
                   </select>
                 </div>
