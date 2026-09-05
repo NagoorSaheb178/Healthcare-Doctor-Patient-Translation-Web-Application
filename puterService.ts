@@ -76,8 +76,13 @@ export const puterService = {
     }
 
     const convoText = messages
-      .map(m => `[${m.senderRole.toUpperCase()}]: ${m.originalText}`)
-      .join('\n');
+      .map(m => {
+        if (m.type === 'document-summary') {
+          return `[${m.senderRole.toUpperCase()} UPLOADED DOCUMENT]: ${m.fileName || 'File'}\nDocument Content/Summary: ${m.translatedText || m.originalText}`;
+        }
+        return `[${m.senderRole.toUpperCase()}]: ${m.originalText} (Translated: ${m.translatedText || 'N/A'})`;
+      })
+      .join('\n\n');
 
     const prompt = `Task: Summarize the following doctor-patient consultation.
     Return ONLY a valid JSON object with the following structure:
