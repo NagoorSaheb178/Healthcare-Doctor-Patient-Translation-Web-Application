@@ -525,12 +525,10 @@ export default function App() {
         </div>
 
         <div className="p-6 flex-shrink-0 border-t border-slate-100/50 bg-white/50 backdrop-blur-xl space-y-4">
-          {currentRole === 'doctor' && (
-            <button onClick={generateSummary} disabled={messages.length === 0 || isSummarizing} className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-indigo-500 to-[#534df2] hover:from-indigo-600 hover:to-indigo-700 disabled:from-slate-200 disabled:to-slate-200 text-white rounded-xl font-black uppercase tracking-widest text-[9px] transition-all shadow-md active:scale-[0.98]">
-              {isSummarizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
-              Generate Summary
-            </button>
-          )}
+          <button onClick={generateSummary} disabled={messages.length === 0 || isSummarizing} className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-indigo-500 to-[#534df2] hover:from-indigo-600 hover:to-indigo-700 disabled:from-slate-200 disabled:to-slate-200 text-white rounded-xl font-black uppercase tracking-widest text-[9px] transition-all shadow-md active:scale-[0.98]">
+            {isSummarizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+            Generate Summary
+          </button>
           <div className="flex gap-2">
             <button onClick={handleSwitchRole} className="flex-1 flex flex-col items-center justify-center gap-1.5 text-indigo-500 bg-indigo-50/50 hover:bg-indigo-100 text-[8px] font-black py-2.5 rounded-lg transition-colors uppercase tracking-[0.1em]">
               <RefreshCcw className="w-3 h-3" /> Switch Role
