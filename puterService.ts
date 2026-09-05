@@ -91,7 +91,11 @@ export const puterService = {
       "diagnoses": ["potential diagnoses"],
       "medications": ["medications and dosages"],
       "followUp": ["next steps"],
-      "overallSummary": "concise clinical summary"
+      "overallSummary": "concise clinical summary",
+      "patientInstructions": ["plain language instructions for the patient"],
+      "patientMedications": ["simple explanation of when to take what"],
+      "patientFollowUp": "simple explanation of next steps",
+      "patientSummary": "a warm, easy-to-read overview of the visit"
     }
 
     Consultation History:
@@ -113,7 +117,11 @@ export const puterService = {
         diagnoses: ["Could not process"],
         medications: ["Not extracted"],
         followUp: ["Consult doctor"],
-        overallSummary: "AI summarization failed. Please review chat history."
+        overallSummary: "AI summarization failed. Please review chat history.",
+        patientInstructions: ["Summary generation failed"],
+        patientMedications: ["Could not extract"],
+        patientFollowUp: "Please speak with your doctor.",
+        patientSummary: "We couldn't generate your visit summary at this time."
       };
     }
   },
