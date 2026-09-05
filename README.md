@@ -2,8 +2,6 @@
 
 **MedBridge AI** is a real-time, AI-powered communication bridge designed to eliminate language barriers in healthcare. It enables doctors and patients to communicate effortlessly through speech and text, ensuring accurate medical consultations regardless of the languages spoken.
 
----
-
 ## ✨ Features
 
 ### 1. Real-Time Translation [MANDATORY]
@@ -22,7 +20,7 @@
 - **Cloud History**: Conversations persist across devices and sessions via cloud Key-Value storage.
 
 ### 4. Healthcare Intelligence
-- **AI Summary**: Generates clinical summaries highlighting **Symptoms**, **Diagnoses**, **Medications**, and **Follow-up actions**.
+- **Dual-Role AI Summary**: Generates two distinct clinical summaries: a highly technical one for the doctor's records, and a warm, plain-language breakdown for the patient.
 - **Conversation Search**: Global search across logs with high-performance text highlighting.
 - **Document Analysis**: Securely upload and summarize medical documents (PDFs, text files) directly within the chat interface.
 
