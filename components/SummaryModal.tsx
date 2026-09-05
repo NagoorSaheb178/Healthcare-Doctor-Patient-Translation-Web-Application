@@ -103,7 +103,7 @@ const SummaryModal: React.FC<Props> = ({ summary, onClose }) => {
 
         <div className="p-6 bg-slate-50 border-t border-slate-100 text-center">
           <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
-            Note: This summary is AI-generated for clinician review only.
+            Note: This summary is AI-generated and is not a substitute for professional medical advice.
           </p>
         </div>
       </div>
