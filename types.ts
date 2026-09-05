@@ -25,6 +25,10 @@ export interface ConversationSummary {
   medications: string[];
   followUp: string[];
   overallSummary: string;
+  patientInstructions: string[];
+  patientMedications: string[];
+  patientFollowUp: string;
+  patientSummary: string;
 }
 
 // Global Puter type definition
