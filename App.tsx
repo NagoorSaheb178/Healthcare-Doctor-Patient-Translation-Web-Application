@@ -654,7 +654,7 @@ export default function App() {
           </div>
         </footer>
 
-        {summary && <SummaryModal summary={summary} onClose={() => setSummary(null)} />}
+        {summary && <SummaryModal summary={summary} onClose={() => setSummary(null)} currentRole={currentRole} />}
       </main>
     </div>
   );
